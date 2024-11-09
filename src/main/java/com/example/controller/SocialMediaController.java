@@ -1,6 +1,7 @@
 package com.example.controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import javax.websocket.server.PathParam;
 
@@ -75,7 +76,7 @@ public class SocialMediaController {
     @ResponseStatus(HttpStatus.OK)
     public @ResponseBody ResponseEntity<Message> getMessageById(@PathVariable int messageId){
         try{
-            Message message = messageService.getById(messageId);
+            Message message = messageService.findById(messageId).orElseThrow();
             System.out.println("It's " + message);
             if (message != null) {
                 return new ResponseEntity<Message>(message, HttpStatus.OK);
@@ -118,7 +119,7 @@ public class SocialMediaController {
         catch(Exception exception){
             return new ResponseEntity<Account>(HttpStatus.BAD_REQUEST);
         }
-        Account lAccount = accountService.login(savedAccount);
+        Optional<Account> lAccount = accountService.findByUsernameAndPassword(account.getUsername(), account.getPassword());
         if(lAccount != null){ return new ResponseEntity<Account>(HttpStatus.CONFLICT); }
         return new ResponseEntity<Account>(HttpStatus.BAD_REQUEST);
     }

@@ -43,9 +43,9 @@ public class MessageService {
         return messages;
     }
 
-    public Message getById(int messageId){ 
-        Message message = (Message) messageRepository.getById(messageId);
-        if(message != null){ return message; }
+    public Optional<Message> findById(int messageId){ 
+        Optional<Message> message = (Optional<Message>) messageRepository.findById(messageId);
+        if(message.isPresent()){ return message; }
         return null;
      }
 

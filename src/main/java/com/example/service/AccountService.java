@@ -44,6 +44,9 @@ public class AccountService {
         return accountRepository.save(account);
     }
     
+    public Optional<Account> findByUsernameAndPassword(String username, String password){
+        return accountRepository.findByUsernameAndPassword(username, password);
+    }
 
     public Account findByAccountId(int accountId){
         Account account = accountRepository.findByAccountId(accountId);
