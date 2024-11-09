@@ -2,42 +2,101 @@ package com.example.service;
 
 import java.util.*;
 
+import javax.transaction.Transactional;
+import org.springframework.transaction.annotation.Propagation;
+
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.example.repository.AccountRepository;
 import com.example.repository.MessageRepository;
+
 import com.example.entity.Message;
+import com.example.entity.Account;
+
 
 @Service
 public class MessageService {
     private MessageRepository messageRepository;
+    private AccountRepository accountRepository;
 
     @Autowired
-    public MessageService(){
+    public MessageService(MessageRepository messageRepository, AccountRepository accountRepository){
         this.messageRepository = messageRepository;
+        this.accountRepository = accountRepository;
     }
 
-    public void CreateMessage(Message message){ messageRepository.save(message); }
-
-    public List<Message> RetrieveAllMessages(){ return (List<Message>) messageRepository.findAll(); }
-
-    public List<Message> RetrieveAllMessagesForUser(String id){         
-        return (List<Message>) messageRepository.findByUserId(id).orElseThrow();
+    public Message save(Message message){
+        if(accountRepository.existsById(message.getPostedBy())){
+            if(validateMessage(message.getMessageText())){
+                return messageRepository.save(message);
+            }
+        }
+        return null;
     }
 
-    public Message RetrieveMessageByMessageId(String id){ return (Message) messageRepository.findById(id).orElseThrow(); }
+    public List<Message> findAllMessages(){ return (List<Message>) messageRepository.findAll(); }
 
-    public void UpdateMessage(String id, String message){ 
-        if(messageRepository.existsById(id) && (message.length() <= 255)){
-            Message foundMessage = (Message) messageRepository.findById(id).orElseThrow();
-            foundMessage.setMessageText(message);
+    public List<Message> findAllByPostedBy(int messageId){      
+        List<Message> messages = (List<Message>) messageRepository.findAllByPostedBy(messageId);
+        return messages;
+    }
+
+    public Message getById(int messageId){ 
+        Message message = (Message) messageRepository.getById(messageId);
+        if(message != null){ return message; }
+        return null;
+     }
+
+    public int UpdateMessage(int messageId, Message message){
+        if(messageRepository.existsById(messageId) && (validateMessage(message.getMessageText()))){
+            Message foundMessage = (Message) messageRepository.findById(messageId).orElseThrow();
+            foundMessage.setMessageText(message.getMessageText());
             messageRepository.save(foundMessage);
+            return 1;
         }
         else{ System.out.println("update fail"); }
+        return 0;
     }
-    
-    public void DeleteMessageByMessageId(String id){ messageRepository.deleteById(id); }
+    public int DeleteMessageByMessageId(int id){ 
+        boolean valid = messageRepository.existsById(id);
+        if(valid){
+            messageRepository.deleteById(id);
+            return 1;
+        }
+        return 0;
+
+     }
 
     
+    //Utility
+    boolean validateMessage(String message, int postedBy){
+        boolean[] passes = new boolean[4];
+
+        passes[0] = message.length() < 255;
+        passes[1] = message != null;
+        passes[2] = message != "";
+        passes[3] = accountRepository.findByAccountId(postedBy) != null;
+
+        for(boolean pass : passes){
+            if(!pass){ return false; }
+        }
+        
+        return true;
+    }
+    boolean validateMessage(String message){
+        boolean[] passes = new boolean[3];
+
+        passes[0] = message.length() < 255;
+        passes[1] = message != null;
+        passes[2] = message != "";
+
+        for(boolean pass : passes){
+            if(!pass){ return false; }
+        }
+        
+        return true;
+    }
 
 }
